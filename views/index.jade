@@ -3,6 +3,7 @@ extends layout
 block content
   h1= title
   p Welcome to #{title}
+  input(type='button' onClick='start(true)' value='start session')
 
   video(autoplay)
   div(id='pixi-field')

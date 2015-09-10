@@ -1,6 +1,7 @@
 var express = require('express');
 var http = require('http');
 var socketio = require('socket.io');
+var _ = require('lodash');
 var path = require('path');
 var favicon = require('serve-favicon');
 var logger = require('morgan');
@@ -20,7 +21,7 @@ app.set('view engine', 'jade');
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
-app.use(logger('dev'));
+//app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
@@ -61,21 +62,39 @@ app.use(function(err, req, res, next) {
 });
 
 
+
+
+
+
 // SOCKET.IO
-
-function handleSocketDisconnect() {
-  console.log('user disconnected');
-}
-
-function handleNewConnection(socket) {
-  console.log('connection');
-  socket.on('disconnect', handleSocketDisconnect);
-}
 
 var connected_sockets = [];
 
-io.on('connection', handleNewConnection);
+function handleSocketDisconnect() {
+  var socketId = this.id;
+  connected_sockets = _.reject(connected_sockets, function(socket) { return socket.id === socketId; });
+  console.log('user disconnected', socketId);
+}
 
+
+function handleNewConnection(socket) {
+  var socketId = socket.id;
+
+  socket.on('disconnect', handleSocketDisconnect);
+
+  socket.on('message', function(msg) {
+    console.log('received message', msg);
+    // send signal to all other connected sockets
+    socket.broadcast.emit('message', msg);
+  });
+
+  console.log('connection', socket.id);
+  connected_sockets.push(socket)
+  console.log('current connection count:', connected_sockets.length);
+}
+
+
+io.on('connection', handleNewConnection);
 
 
 module.exports = app;
