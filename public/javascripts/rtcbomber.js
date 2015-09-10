@@ -1,33 +1,51 @@
-var renderer = new PIXI.autoDetectRenderer(800, 600);
+var renderer = new PIXI.autoDetectRenderer(768, 768);
 document.getElementById('pixi-field').appendChild(renderer.view);
 
-// You need to create a root container that will hold the scene you want to draw.
 var stage = new PIXI.Container();
+var loader = PIXI.loader;
+var textures = [
+  'bomberman',
+  'bombs_0001',
+  'bombs_0002',
+  'bombs_0003',
+  'bombs_0004',
+  'sprites_0000',
+  'sprites_0001',
+  'sprites_0002',
+  'sprites_0003',
+  'sprites_0004',
+  'sprites_0005',
+  'sprites_0006',
+  'sprites_0007',
+  'sprites_0008'
+];
 
-// This creates a texture from a 'bunny.png' image.
-var bunnyTexture = PIXI.Texture.fromImage('/sprites/bomberman.png');
-var bunny = new PIXI.Sprite(bunnyTexture);
-
-// Setup the position and scale of the bunny
-bunny.position.x = 400;
-bunny.position.y = 300;
-
-bunny.scale.x = 2;
-bunny.scale.y = 2;
-
-// Add the bunny to the scene we are building.
-stage.addChild(bunny);
-
-// kick off the animation loop (defined below)
-animate();
-
-function animate() {
-  // start the timer for the next animation loop
-  requestAnimationFrame(animate);
-
-  // each frame we spin the bunny around a bit
-  bunny.rotation += 0.01;
-
-  // this is the main render call that makes pixi draw your container and its children.
-  renderer.render(stage);
+function getSprite(resources, sprite) {
+  return new PIXI.Sprite(resources[sprite].texture);
 }
+
+textures.forEach(function (val) {
+  loader.add(val, '/sprites/' + val + '.png');
+});
+
+loader.load(function (loader, resources) {
+  var size = 16;
+
+  for (i = 0; i < size; i++) {
+    for (u = 0; u < size; u++) {
+      var tile = new PIXI.Sprite(resources['sprites_0008'].texture);
+
+      tile.scale.x = 2;
+      tile.scale.y = 2;
+
+      stage.addChild(tile);
+
+      tile.x = 48 * i;
+      tile.y = 48 * u;
+
+      renderer.render(stage);
+    }
+  }
+
+  renderer.render(stage);
+});
