@@ -17,12 +17,33 @@ var textures = [
   'sprites_0005',
   'sprites_0006',
   'sprites_0007',
-  'sprites_0008'
+  'sprites_0008',
+  'Stone_Brick',
+  'Brick'
 ];
 
-function getSprite(resources, sprite) {
-  return new PIXI.Sprite(resources[sprite].texture);
+function checkPos(coordinates, size) {
+  var blackList = [
+    '0,0',
+    '0,1',
+    '1,0',
+    '1,1',
+    size+','+size,
+    (size-1)+','+size,
+    size+','+(size-1),
+    size-1+','+(size-1),
+    '0,'+size,
+    '1,'+size,
+    '0,'+(size-1),
+    '1,'+(size-1),
+    size + ',1',
+    size + ',0',
+    (size-1) + ',1',
+    (size-1) + ',0'
+  ];
+  return (_.indexOf(blackList, coordinates) === -1);
 }
+
 
 textures.forEach(function (val) {
   loader.add(val, '/sprites/' + val + '.png');
@@ -50,8 +71,8 @@ loader.load(function (loader, resources) {
   stage.addChild(backgroundContainer);
   renderer.render(stage);
 
-  for (i=0;i<size;i++) {
-    for (u=0;u<size;u++){
+  for (var i=0;i<size;i++) {
+    for (var u=0;u<size;u++){
       if ((i + 7) % 7 === 0 && (u + 7) % 7 === 0) {
         var pillar = new PIXI.Sprite(resources['sprites_0006'].texture);
 
@@ -65,8 +86,8 @@ loader.load(function (loader, resources) {
       }
       else {
         var spriteNum = Math.floor((Math.random() * 10));
-        if (spriteNum < 6) {
-          var brick = new PIXI.Sprite(resources['sprites_000' + spriteNum].texture);
+        if (spriteNum < 6 && checkPos(i+','+u, size-1)) {
+          var brick = new PIXI.Sprite(resources['Stone_Brick'].texture);
 
           brick.scale.x = 2;
           brick.scale.y = 2;
@@ -80,7 +101,6 @@ loader.load(function (loader, resources) {
     }
   }
 
-  console.log(gameBlockContainer);
   stage.addChild(gameBlockContainer);
   renderer.render(stage);
 });
