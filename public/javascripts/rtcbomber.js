@@ -38,7 +38,12 @@ var players = [
       [1,1],
       [0,1],
       [1,0]
-    ]
+    ],
+    bombs: [],
+    maxBombs: 5,
+    bombSize: 3,
+    dead: false,
+    listeners: []
   },
   {
     name: 'Player 2',
@@ -48,7 +53,12 @@ var players = [
       [13,1],
       [13,0],
       [14,1]
-    ]
+    ],
+    bombs: [],
+    maxBombs: 5,
+    bombSize: 3,
+    dead: false,
+    listeners: []
   },
   {
     name: 'Player 3',
@@ -58,7 +68,12 @@ var players = [
       [1,13],
       [0,13],
       [1,14]
-    ]
+    ],
+    bombs: [],
+    maxBombs: 5,
+    bombSize: 3,
+    dead: false,
+    listeners: []
   },
   {
     name: 'Player 4',
@@ -68,13 +83,20 @@ var players = [
       [13,13],
       [13,14],
       [14,13]
-    ]
+    ],
+    bombs: [],
+    maxBombs: 5,
+    bombSize: 3,
+    dead: false,
+    listeners: []
   }
 ];
 var playingField = [];
 var pillars = [];
+var brickSprites = [];
 
 var myPlayerNumber = 0;
+var bombTime = 2000;
 
 function checkPos(coordinates) {
   var blackList = [
@@ -180,6 +202,7 @@ loader.load(function (loader, resources) {
 
   function renderBrick(i,u) {
     var brick = new PIXI.Sprite(resources['Stone_Brick'].texture);
+    brickSprites.push(brick);
 
     brick.scale.x = 2;
     brick.scale.y = 2;
@@ -216,62 +239,127 @@ loader.load(function (loader, resources) {
     renderBomberMan(players[myPlayerNumber]);
   }
 
+  function determineDestruction(i, u) {
+    // Check if any players are in the coordinates
+    players.forEach(function (player) {
+      if (player.currentPos[0] === i && player.currentPos[1] === u) {
+        player.dead = true;
+        gameBlockContainer.removeChild(player.sprite);
+        player.sprite.destroy();
+
+        player.listeners.forEach(function (listener) {
+          listener.press = null;
+          listener.release = null;
+        });
+      }
+    });
+
+    // Check if any bricks are in the coordinates
+    if (playingField.containsArray([i,u])) {
+      var fieldIndex = _.findIndex(playingField, [i,u]);
+      gameBlockContainer.removeChild(brickSprites[fieldIndex]);
+      brickSprites[fieldIndex].destroy();
+      brickSprites.splice(fieldIndex, 1);
+      playingField.splice(fieldIndex, 1);
+    }
+    renderer.render(stage);
+  }
+
+  function placeFlame(i,u, time) {
+    var flame = new PIXI.Sprite(resources['bombs_0004'].texture);
+
+    flame.scale.x = 1.7;
+    flame.scale.y = 1.7;
+
+    gameBlockContainer.addChild(flame);
+
+    flame.x = 48*(i);
+    flame.y = 48*(u);
+
+    setTimeout(function(){
+      gameBlockContainer.removeChild(flame);
+      flame.destroy();
+      determineDestruction(i,u);
+
+      renderer.render(stage);
+    }, time);
+  }
+
+  function placeBomb(i, u) {
+    if (players[myPlayerNumber].bombs.length < players[myPlayerNumber].maxBombs) {
+      var bomb = new PIXI.Sprite(resources['bombs_0001'].texture);
+      players[myPlayerNumber].bombs.push(bomb);
+
+      bomb.scale.x = 2;
+      bomb.scale.y = 2;
+
+      gameBlockContainer.addChild(bomb);
+
+      bomb.x = 48*i + 10;
+      bomb.y = 48*u + 10;
+      renderer.render(stage);
+
+      setTimeout(function (){
+        gameBlockContainer.removeChild(bomb);
+        bomb.destroy();
+
+        var explodedBomb = new PIXI.Sprite(resources['bombs_0004'].texture);
+
+        explodedBomb.scale.x = 2;
+        explodedBomb.scale.y = 2;
+
+        gameBlockContainer.addChild(explodedBomb);
+
+        explodedBomb.x = 48*i;
+        explodedBomb.y = 48*u;
+
+        for (var z = 1; z < players[myPlayerNumber].bombSize; z++) {
+          placeFlame(i+z, u, bombTime/3);
+          placeFlame(i-z, u, bombTime/3);
+          placeFlame(i, u+z, bombTime/3);
+          placeFlame(i, u-z, bombTime/3);
+        }
+        determineDestruction(i,u);
+        renderer.render(stage);
+
+        setTimeout(function(){
+          gameBlockContainer.removeChild(explodedBomb);
+          explodedBomb.destroy();
+          players[myPlayerNumber].bombs.pop();
+
+          renderer.render(stage);
+        }, bombTime /3);
+      }, bombTime);
+    }
+  }
+
   /*
    * Enable keyboard
    */
   // Left arrow
-  keyboard(37,
-    function() { // Pressed
-      console.log(37, 'pressed');
+  players[myPlayerNumber].listeners.push(keyboard(37, function() { // Pressed
       offSetPlayer(-1, 0);
-    },
-    function () { // Released
-      console.log(37, 'released');
-    }
-  );
+    }, function () {}));
 
   // Up arrow
-  keyboard(38,
-    function() { // Pressed
-      console.log(38, 'pressed');
+  players[myPlayerNumber].listeners.push(keyboard(38, function() { // Pressed
       offSetPlayer(0, -1);
-    },
-    function () { // Released
-      console.log(38, 'released');
-    }
-  );
+    }, function (){}));
 
   // Right arrow
-  keyboard(39,
-    function() { // Pressed
-      console.log(39, 'pressed');
+  players[myPlayerNumber].listeners.push(keyboard(39, function() { // Pressed
       offSetPlayer(1, 0);
-    },
-    function () { // Released
-      console.log(39, 'released');
-    }
-  );
+    }, function (){}));
 
   // Down arrow
-  keyboard(40,
-    function() { // Pressed
-      console.log(40, 'pressed');
+  players[myPlayerNumber].listeners.push(keyboard(40, function() { // Pressed
       offSetPlayer(0, 1);
-    },
-    function () { // Released
-      console.log(40, 'released');
-    }
-  );
+    }, function () {}));
 
   // Space bar
-  keyboard(32,
-    function() {
-      console.log(32, 'pressed');
-    },
-    function () {
-      console.log(32, 'released');
-    }
-  );
+  players[myPlayerNumber].listeners.push(keyboard(32, function() {}, function () {
+    placeBomb(players[myPlayerNumber].currentPos[0], players[myPlayerNumber].currentPos[1]);
+  }));
 });
 
 function keyboard(keyCode, pressed, released) {
