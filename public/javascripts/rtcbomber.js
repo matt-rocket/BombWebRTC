@@ -1,3 +1,11 @@
+Array.prototype.containsArray = function(val) {
+  var hash = {};
+  for(var i=0; i<this.length; i++) {
+    hash[this[i]] = i;
+  }
+  return hash.hasOwnProperty(val);
+};
+
 var renderer = new PIXI.autoDetectRenderer(720, 720);
 document.getElementById('pixi-field').appendChild(renderer.view);
 
@@ -64,6 +72,7 @@ var players = [
   }
 ];
 var playingField = [];
+var pillars = [];
 
 var myPlayerNumber = 0;
 
@@ -132,6 +141,7 @@ loader.load(function (loader, resources) {
 
         pillar.x = 48*i;
         pillar.y = 48*u;
+        pillars.push([i,u]);
       }
       else {
         if (Math.floor((Math.random() * 10)) < 6 && checkPos(i+','+u)) {
@@ -189,11 +199,18 @@ loader.load(function (loader, resources) {
   }
 
   function offSetPlayer(i, u) {
-    if (players[myPlayerNumber].currentPos[0] < 15){
-      players[myPlayerNumber].currentPos[0] = players[myPlayerNumber].currentPos[0] + i;
-    }
-    if (players[myPlayerNumber].currentPos[1] < 15) {
-      players[myPlayerNumber].currentPos[1] = players[myPlayerNumber].currentPos[1] + u;
+    var oldX = players[myPlayerNumber].currentPos[0];
+    var oldY = players[myPlayerNumber].currentPos[1];
+    var newX = oldX + i;
+    var newY = oldY + u;
+
+    if (!playingField.containsArray([newX, newY]) && !pillars.containsArray([newX, newY])) {
+      if (newX < 15 && newX >= 0){
+        players[myPlayerNumber].currentPos[0] = newX;
+      }
+      if (newY < 15 && newY >= 0) {
+        players[myPlayerNumber].currentPos[1] = newY;
+      }
     }
 
     renderBomberMan(players[myPlayerNumber]);
