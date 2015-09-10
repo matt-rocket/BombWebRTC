@@ -1,4 +1,4 @@
-var renderer = new PIXI.autoDetectRenderer(768, 768);
+var renderer = new PIXI.autoDetectRenderer(720, 720);
 document.getElementById('pixi-field').appendChild(renderer.view);
 
 var stage = new PIXI.Container();
@@ -29,7 +29,9 @@ textures.forEach(function (val) {
 });
 
 loader.load(function (loader, resources) {
-  var size = 16;
+  var size = 15;
+  var backgroundContainer = new PIXI.Container();
+  var gameBlockContainer = new PIXI.Container();
 
   for (i = 0; i < size; i++) {
     for (u = 0; u < size; u++) {
@@ -38,14 +40,47 @@ loader.load(function (loader, resources) {
       tile.scale.x = 2;
       tile.scale.y = 2;
 
-      stage.addChild(tile);
+      backgroundContainer.addChild(tile);
 
       tile.x = 48 * i;
       tile.y = 48 * u;
-
-      renderer.render(stage);
     }
   }
 
+  stage.addChild(backgroundContainer);
+  renderer.render(stage);
+
+  for (i=0;i<size;i++) {
+    for (u=0;u<size;u++){
+      if ((i + 7) % 7 === 0 && (u + 7) % 7 === 0) {
+        var pillar = new PIXI.Sprite(resources['sprites_0006'].texture);
+
+        pillar.scale.x = 2;
+        pillar.scale.y = 2;
+
+        gameBlockContainer.addChild(pillar);
+
+        pillar.x = 48*i;
+        pillar.y = 48*u;
+      }
+      else {
+        var spriteNum = Math.floor((Math.random() * 10));
+        if (spriteNum < 6) {
+          var brick = new PIXI.Sprite(resources['sprites_000' + spriteNum].texture);
+
+          brick.scale.x = 2;
+          brick.scale.y = 2;
+
+          gameBlockContainer.addChild(brick);
+
+          brick.x = 48*i;
+          brick.y = 48*u;
+        }
+      }
+    }
+  }
+
+  console.log(gameBlockContainer);
+  stage.addChild(gameBlockContainer);
   renderer.render(stage);
 });
